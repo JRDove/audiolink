@@ -1,0 +1,185 @@
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="PSPad editor, www.pspad.com">
+  <title>Minimal Link</title>
+  <style type="text/css">
+textarea {
+ width: 380px;
+ height: 27px;
+ font-size: 1em;
+ font-family: sans-serif, Arial, Helvetica;
+ border: 1px solid black;
+ resize: none;
+}
+</style>
+  </head>
+  <body>
+  <br>
+  <textarea rows="1" cols="80" id="nameBox"></textarea>
+  <br>
+   <textarea rows="1" cols="80" id="codeBox"></textarea>
+  <br>
+  <h1 id='myH1'></h1>
+  <br>
+  <button id="open" onclick="openRoom()">Open</button>
+  <button id="join" onclick="joinRoom()">Join</button>
+  <button id="nom" onclick="setName()">Name</button>
+  <button id="send" onclick="readTextFile('teacher.dat')">Read</button>
+  <br>
+
+<script src="RTCMultiConnection.js"></script>
+<!--script src="https://audiolink.herokuapp.com/socket.io/socket.io.js"></script-->
+
+<script src="socket.io.js"></script>
+
+<script type="text/javascript"> 
+
+//*****************************globalVARS*************************************************
+var myName;
+//*******************************CONNECTION***********************************************
+var connection = new RTCMultiConnection();
+
+connection.socketURL = '/';
+// connection.socketURL = 'https://audiolink.herokuapp.com:443/';
+// connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
+
+// https://www.mediacours.com/audiolink3 https://www.mediacours.com/005/teacher
+connection.session = {
+    audio: true,
+    video: false,
+    data: true
+};
+          
+connection.sdpConstraints.mandatory = {
+    OfferToReceiveAudio: true,
+    OfferToReceiveVideo: false
+};
+
+connection.mediaConstraints.video = false
+//******************************************************************************
+window.addEventListener('beforeunload', function () {
+  if (isTeacher == true)
+  {
+  connection.close();
+  }
+}, false);
+//************************************ON****************************************
+// This removes name/ID from lists on interface.
+connection.onleave = function(e) {
+var XID = e.userid
+userLeft(XID);
+};
+//------------------------------------------------------------------------------
+// Sent when teacher closes tab or browser.
+connection.onSessionClosed = function(e) {
+top.tbfunction_pgTBObjSet("sessionOver", "trigger");
+};
+//------------------------------------------------------------------------------
+connection.onmessage = function(e) {
+var code = e.data;
+  if (myName.includes('Teacher'))
+  {
+   updateList(code);
+  }
+  else
+  {
+  connection.streamEvents[code].stream.unmute('both');
+  var obj = document.getElementById(code);
+  obj.volume = 1;
+  obj.muted = false;
+  }
+  // e.userid
+  // e.extra
+};
+//****************************FUNCTIONS****************************************************
+function studentUnmute(){
+var code = document.getElementById('codeBox').value;
+connection.send(code);
+}
+////////////////////////////////////////////////////////
+function updateList(newCode){
+var obj = document.getElementById('myH1');
+var txt = obj.innerHTML;
+  if (txt)
+  {
+  txt = txt + "<br />" + newCode;
+  }
+  else
+  {
+  txt = newCode;
+  }
+obj.innerHTML = txt;
+};
+/////////////////////////////////////////////////////////////
+function update(newCode){
+  if (myName == 'Teacher')
+  {
+   uploadData(newCode);
+  }
+myName = myName + '~' + newCode;
+  if (myName.includes ('Teacher'))
+  {
+   updateList(myName);
+  }
+};
+////////////////////////////////////////////////////////////////
+function setName(theName){
+myName = document.getElementById('nameBox').value;
+  if (myName !== 'Teacher')
+  {
+   getTeacherCode();
+  }
+};
+//////////////////////////////////////////////////////////////
+function sendMessage(){
+  if (myName.includes ('Teacher') == false)
+  {
+   connection.send(myName);
+  }
+};
+////////////////////////////////////////////////////////////
+function openRoom(){
+connection.open('myRoom');
+};
+//////////////////////////////////////////////////////////////
+function joinRoom(){
+connection.join('myRoom');
+};
+
+//**********************************************************************************
+function uploadData(code){
+var data = new FormData();
+var contents = encodeURIComponent(code);
+data.append("data" , contents);
+var xhr = (window.XMLHttpRequest) ? new XMLHttpRequest() : new activeXObject("Microsoft.XMLHTTP");
+xhr.open( 'post', 'upload.php', true );
+xhr.send(data);
+};
+///////////////////////////////////////////////////////////////
+function getTeacherCode() {
+// decodeURIComponent("http%3A%2F%2Ffoo%20bar%2F")
+};
+//////////////////////////////////////////////////////////////
+function getTeacherCode() {
+var obj = document.getElementById('myH1');
+var rawFile = new XMLHttpRequest();
+rawFile.open("GET", 'teacher.dat', false);
+rawFile.onreadystatechange = function ()
+{
+    if(rawFile.readyState === 4)
+    {
+        if(rawFile.status === 200 || rawFile.status == 0)
+        {
+            var allText = rawFile.responseText;
+            allText = decodeURIComponent(allText);
+            obj.innerHTML = allText;
+        }
+    }
+}
+rawFile.send(null);
+};
+</script>
+  </body>
+</html>
+      
