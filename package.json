@@ -1,0 +1,22 @@
+{
+  "name": "audiolink2",
+  "version": "0.0.1",
+  "description": "A Node.js app",
+  "engines": {
+    "node": "latest"
+  },
+  "main": "index.php",
+  "scripts": {
+    "start": "node server.js",
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JRDove/audiolink"
+  },
+  "keywords": [
+    "node",
+    "heroku",
+    "RTC"
+  ],
+  "license": "MIT"
+}
